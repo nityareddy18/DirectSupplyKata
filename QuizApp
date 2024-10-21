@@ -1,0 +1,110 @@
+import json
+import requests
+import time
+import random
+
+# Function to fetch quiz data from the API
+def fetch_quiz_data(amount, category, difficulty, q_type, encoding='default'):
+    base_url = 'https://opentdb.com/api.php'
+
+    # Construct query parameters
+    params = {
+        'amount': (amount),            # Number of questions
+        'category': (category),        # Quiz category
+        'difficulty': (difficulty),    # Question difficulty
+        'type': (q_type),              # Type of question (multiple/boolean)
+        'encode': (encoding)           # Encoding type
+    }
+
+    
+    custom_url = (
+        base_url + '?' +
+        'amount=' + str(amount) + '&' +
+        'category=' + str(category) + '&' +
+        'difficulty=' + difficulty + '&' +
+        'type=' + q_type
+      )
+  
+
+    try:
+        # Send GET request to fetch data from API
+        
+        response = requests.get(custom_url)
+        time.sleep(2)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            quiz_data = response.json()  # Parse the JSON response
+            return quiz_data  # Return the list of questions
+        else:
+            print(f"Error: {response.status_code} - Unable to fetch quiz data.")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+
+
+
+def get_user_input():
+  # User selects the number of questions, category, difficulty, etc.
+  userAmount = input("Enter the number of questions: ")
+  userCategory = input("Enter the category ID: ")
+  userDifficulty = input("Enter difficulty (easy, medium, hard): ")
+  userQ_type = input("Enter question type (multiple, boolean): ")
+
+  return userAmount, userCategory, userDifficulty, userQ_type
+
+
+
+def display_quiz(results):
+    score = 0  # Initialize score to 0
+
+    for i, question in enumerate(results):
+        print(f"\nQuestion {i+1}: {question[5]}")  # Display the question
+
+        # Combine incorrect answers and the correct answer into one list of choices
+        choices = [question[4]]
+        for i, incorrect_answer in enumerate(question[5]):
+            choices.append(incorrect_answer)
+
+        # Shuffle the choices so the correct answer isn't always in the same place
+        random.shuffle(choices)
+
+        # Display answer choices to the user
+        for j, choice in enumerate(choices):
+            print(f"{j + 1}. {choice}")  # Show each option with a number
+
+        # Validate user input to ensure a valid number is entered
+        while True:
+            try:
+                user_answer = int(input("Your answer (enter the number): "))
+                if 1 <= user_answer <= len(choices):
+                    break  # Exit the loop if input is valid
+                else:
+                    print("Please enter a valid option number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        # Check if the user's answer is correct by comparing it to the correct answer
+        correct_answer = question[4]
+        if choices[user_answer - 1] == correct_answer:
+            print("Correct!")
+            score += 1  # Increment score for a correct answer
+        else:
+            print(f"Incorrect! The correct answer was: {correct_answer}")
+
+    return score  # Return the final score after the quiz is complete
+
+
+
+
+user_input = get_user_input()
+quiz_data = fetch_quiz_data(user_input[0], user_input[1], user_input[2], user_input[3])
+
+if quiz_data:
+    score = display_quiz(quiz_data)
+    print(f"\nYour final score: {score} out of {user_input[0]}")
+else:
+    print("Failed to load quiz data.")
